@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zeka Oyunları Plan Takibi</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 40px; background-color: #f0f2f5; color: #1a1a1a; }
+        .container { max-width: 500px; margin: auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
+        h2 { text-align: center; color: #1e3a8a; margin-top: 0; }
+        label { font-weight: 600; display: block; margin-bottom: 8px; color: #4b5563; }
+        select { width: 100%; padding: 12px; border-radius: 8px; border: 2px solid #e5e7eb; font-size: 16px; margin-bottom: 20px; outline: none; transition: border-color 0.2s; }
+        select:focus { border-color: #3b82f6; }
+        .result-box { padding: 20px; background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 8px; margin-bottom: 20px; }
+        .topic-title { font-weight: bold; color: #2563eb; display: block; margin-bottom: 5px; }
+        .btn-group { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        button { padding: 12px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; transition: opacity 0.2s; }
+        .btn-done { background-color: #ef4444; color: white; }
+        .btn-save { background-color: #10b981; color: white; }
+        button:hover { opacity: 0.9; }
+        button:disabled { background-color: #ccc; cursor: not-allowed; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Ders Planı Takibi</h2>
+    
+    <label for="haftaSecici">Hafta Seçin:</label>
+    <select id="haftaSecici" onchange="guncelle()">
+        <option value="">-- Seçiniz --</option>
+        <option value="18">18. Hafta (12-16 Ocak)</option>
+        <option value="19">19. Hafta (2-6 Şubat)</option>
+        <option value="20">20. Hafta (9-13 Şubat)</option>
+        <option value="21">21. Hafta (16-20 Şubat)</option>
+        <option value="22">22. Hafta (23-27 Şubat)</option>
+        <option value="23">23. Hafta (2-6 Mart)</option>
+        <option value="24">24. Hafta (9-13 Mart)</option>
+        <option value="25">25. Hafta (23-27 Mart)</option>
+        <option value="26">26. Hafta (30 Mart- 3 Nisan)</option>
+        <option value="27">27. Hafta (6-10 Nisan)</option>
+        <option value="28">28. Hafta (13-17 Nisan)</option>
+        <option value="29">29. Hafta (20-24 Nisan)</option>
+        <option value="30">30. Hafta (27 Nisan-1 Mayıs)</option>
+        <option value="31">31. Hafta (4-8 Mayıs)</option>
+        <option value="32">32. Hafta (11-15 Mayıs)</option>
+        <option value="33">33. Hafta (18-22 Mayıs)</option>
+        <option value="34">34. Hafta (1-5 Haziran)</option>
+        <option value="35">35. Hafta (8-12 Haziran)</option>
+        <option value="36">36. Hafta (15-19 Haziran)</option>
+    </select>
+
+    <div class="result-box">
+        <span class="topic-title">Konu:</span>
+        <div id="konuAlani">Lütfen listeden seçim yapın.</div>
+    </div>
+
+    <div class="btn-group">
+        <button class="btn-done" onclick="haftayiSil()">Haftayı Bitir (Sil)</button>
+        <button class="btn-save" onclick="veriyiKaydet()">Durumu Kaydet</button>
+    </div>
+</div>
+
+<script>
+    const konular = {
+        "18": "TANGRAM / T-TANGRAM / KATLAMA OYUNLARI",
+        "19": "KÜP SAYMA / ŞEKİL OLUŞTURMA / YÜZEY AÇINIMLARI",
+        "20": "SİMETRİ / AYNA OYUNLARI",
+        "21": "ÜÇ BOYUTLU ŞEKİL OLUŞTURMA",
+        "22": "SAYI / ŞEKİL / RESİM HAFIZASI OYUNLARI",
+        "23": "KELİME / SES / HİKAYE HAFIZASI OYUNLARI",
+        "24": "HATIRLATICI TEKNİKLER VE STRATEJİLER",
+        "25": "GÖRSEL DİKKAT OYUNLARI",
+        "26": "HAFIZA TEKNİKLERİ UYGULAMALARI",
+        "27": "HAFIZA OYUNLARI TURNUVASI",
+        "28": "NİM / MANGALA / DAMA / ÜÇ TAŞ",
+        "29": "DOKUZ TAŞ / ALTI TAŞ / TİC-TAC-TOE",
+        "30": "SATRANÇ / GO TEMEL TAŞ HAREKETLERİ",
+        "31": "STRATEJİ GELİŞTİRME VE ANALİZ",
+        "32": "OYUN SONU VE MAT STRATEJİLERİ",
+        "33": "KLASİK STRATEJİ OYUNLARI ANALİZİ",
+        "34": "SATRANÇ/GO TEMEL OYUN PRENSİPLERİ",
+        "35": "YALANCI DOĞRUCU OYUNLARI KİBRİT PROBLEMLERİ",
+        "36": "KURT-KUZU-OT / NEHİR GEÇME / TARTIM PROBLEMLERİ"
+    };
+
+    let silinenler = JSON.parse(localStorage.getItem('silinenHaftalar')) || [];
+
+    function arayuzTemizle() {
+        const select = document.getElementById("haftaSecici");
+        Array.from(select.options).forEach(option => {
+            if (silinenler.includes(option.value)) {
+                option.remove();
+            }
+        });
+        guncelle();
+    }
+
+    function guncelle() {
+        const val = document.getElementById("haftaSecici").value;
+        const alan = document.getElementById("konuAlani");
+        alan.innerText = konular[val] || "Lütfen listeden seçim yapın.";
+    }
+
+    function haftayiSil() {
+        const select = document.getElementById("haftaSecici");
+        const val = select.value;
+        if (val) {
+            silinenler.push(val);
+            select.remove(select.selectedIndex);
+            guncelle();
+        }
+    }
+
+    function veriyiKaydet() {
+        localStorage.setItem('silinenHaftalar', JSON.stringify(silinenler));
+        alert("İşlenen haftalar tarayıcıya kaydedildi!");
+    }
+
+    // Başlangıçta silinenleri temizle
+    window.onload = arayuzTemizle;
+</script>
+
+</body>
+</html>
